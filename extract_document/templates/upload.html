@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice Scanner</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 60px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .upload-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        input[type="file"] {
+            border: 1px solid #ccc;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #5a67d8;
+        }
+
+        .tick {
+            color: green;
+            font-size: 20px;
+            display: none;
+        }
+
+        .file-name {
+            font-size: 14px;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        .output {
+            margin-top: 25px;
+            text-align: left;
+        }
+
+        .card {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        pre {
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        canvas {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🇮🇳 Invoice Scanner</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="upload-row">
+            <input type="file" name="image" id="fileInput" required>
+            <button type="submit">Extract</button>
+            <span class="tick" id="tick">✔</span>
+        </div>
+
+        <div class="file-name" id="fileName"></div>
+    </form>
+
+    <!-- 📊 Monthly Total -->
+    {% if monthly_total %}
+    <div class="output">
+        <h3>📊 Monthly Expenditure</h3>
+        <div class="card">
+            <p><strong>Total (This Month):</strong> ₹ {{ monthly_total }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 📈 Graph -->
+    {% if chart_labels %}
+    <div class="output">
+        <h3>📈 Monthly Spending Trend</h3>
+        <canvas id="expenseChart" height="100"></canvas>
+    </div>
+    {% endif %}
+
+    <!-- 📄 Extracted Data -->
+    {% if data %}
+    <div class="output">
+        <h3>📄 Extracted Invoice Data</h3>
+
+        <div class="card">
+            <p><strong>GSTIN:</strong> {{ data.gst }}</p>
+            <p><strong>Invoice No:</strong> {{ data.invoice_no }}</p>
+            <p><strong>Date:</strong> {{ data.date }}</p>
+            <p><strong>Total Amount:</strong> {% if data.amount %}₹ {{ data.amount }}{% else %}—{% endif %}</p>
+        </div>
+
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const fileInput = document.getElementById("fileInput");
+    const tick = document.getElementById("tick");
+    const fileName = document.getElementById("fileName");
+
+    fileInput.addEventListener("change", function() {
+        if (this.files.length > 0) {
+            tick.style.display = "inline";
+            fileName.textContent = "Selected: " + this.files[0].name;
+        } else {
+            tick.style.display = "none";
+            fileName.textContent = "";
+        }
+    });
+
+    // Chart logic
+    {% if chart_labels %}
+    const labels = {{ chart_labels|safe }};
+    const data = {{ chart_data|safe }};
+
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Daily Spending (₹)',
+                data: data,
+                fill: false,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+    {% endif %}
+</script>
+
+</body>
+</html>

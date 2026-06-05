@@ -1,0 +1,20 @@
+# Credentials — never commit these
+google.json
+my-ocr-project-494116-fe5559f34a46.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Django
+db.sqlite3
+media/
+images/
+
+# macOS
+.DS_Store
+
+# Environment variables
+.env
